@@ -1,9 +1,17 @@
 # llm.py
 from dotenv import load_dotenv
-import os
 from langchain_groq import ChatGroq
+import os
 
-load_dotenv()
+load_dotenv()  # works locally
+
+# This makes it work on Streamlit Cloud too
+try:
+    import streamlit as st
+    for key, val in st.secrets.items():
+        os.environ.setdefault(key, str(val))
+except Exception:
+    pass
 
 def get_llm():
     """Load Llama 3 via Groq API"""

@@ -1,7 +1,15 @@
 from dotenv import load_dotenv
 import os
 
-load_dotenv()
+load_dotenv()  # works locally
+
+# This makes it work on Streamlit Cloud too
+try:
+    import streamlit as st
+    for key, val in st.secrets.items():
+        os.environ.setdefault(key, str(val))
+except Exception:
+    pass
 
 
 from langchain_huggingface import HuggingFaceEmbeddings   # ✅ fix 2

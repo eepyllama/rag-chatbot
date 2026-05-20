@@ -1,4 +1,10 @@
-# .gitignore
 .env
 venv/
 __pycache__/
+*.pyc
+.DS_Store
+data/
+debug.py
+test_setup.py
+create_test_pdf.py
+.streamlit/secrets.toml
