@@ -1,10 +1,18 @@
 # app.py
 import streamlit as st
 from dotenv import load_dotenv
+import os
 from chain import get_chain_with_history, ask_with_history
 from langchain_core.messages import HumanMessage, AIMessage
 
 load_dotenv()
+
+# Load Streamlit secrets
+try:
+    for key, val in st.secrets.items():
+        os.environ.setdefault(key, str(val))
+except Exception:
+    pass
 
 # ── Page config ───────────────────────────────────────────
 st.set_page_config(
@@ -13,22 +21,21 @@ st.set_page_config(
     layout="centered"
 )
 
-# ── Header ────────────────────────────────────────────────
 st.title("🦙 RAG Chatbot")
 st.caption("Powered by LangChain · Pinecone · Llama 3.1")
 
-# ── Session state (persists across reruns) ────────────────
+# ── Session state ─────────────────────────────────────────
 if "chat_history" not in st.session_state:
-    st.session_state.chat_history = []   # LangChain memory objects
+    st.session_state.chat_history = []
 
 if "messages" not in st.session_state:
-    st.session_state.messages = []       # display messages
+    st.session_state.messages = []
 
 if "chain" not in st.session_state:
     with st.spinner("🔗 Loading RAG chain..."):
-        st.session_state.chain = get_chain_with_history()  # built once
+        st.session_state.chain = get_chain_with_history()
 
-# ── Display existing messages ─────────────────────────────
+# ── Display messages ──────────────────────────────────────
 for msg in st.session_state.messages:
     with st.chat_message(msg["role"]):
         st.markdown(msg["content"])
@@ -36,12 +43,10 @@ for msg in st.session_state.messages:
 # ── Chat input ────────────────────────────────────────────
 if question := st.chat_input("Ask me anything about your documents..."):
 
-    # Show user message immediately
     st.session_state.messages.append({"role": "user", "content": question})
     with st.chat_message("user"):
         st.markdown(question)
 
-    # Generate and show answer
     with st.chat_message("assistant"):
         with st.spinner("🤖 Thinking..."):
             answer = ask_with_history(
@@ -51,10 +56,7 @@ if question := st.chat_input("Ask me anything about your documents..."):
             )
         st.markdown(answer)
 
-    # Save to display history
     st.session_state.messages.append({"role": "assistant", "content": answer})
-
-    # Save to LangChain memory
     st.session_state.chat_history.append(HumanMessage(content=question))
     st.session_state.chat_history.append(AIMessage(content=answer))
 
@@ -71,7 +73,7 @@ with st.sidebar:
 - 🔗 **LangChain** — RAG pipeline
 - 🌲 **Pinecone** — vector database
 - 🦙 **Llama 3.1** via Groq — LLM
-- 🤗 **HuggingFace** — embeddings
+- 🤗 **HuggingFace** — embeddings API
 - 🎈 **Streamlit** — UI
     """)
 

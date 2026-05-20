@@ -10,6 +10,7 @@ from langchain_core.output_parsers import StrOutputParser
 
 load_dotenv()
 
+# Load Streamlit secrets if running on Streamlit Cloud
 try:
     import streamlit as st
     for key, val in st.secrets.items():
@@ -17,18 +18,17 @@ try:
 except Exception:
     pass
 
-# ── Prompt 1: condense follow-up into standalone question ──
+# Prompt 1 — condense follow-up into standalone question
 CONDENSE_PROMPT = ChatPromptTemplate.from_messages([
-    ("system", """Given the conversation history and a follow-up question, 
-rewrite the follow-up question to be a fully standalone question that 
-includes all necessary context from the history.
+    ("system", """Given the conversation history and a follow-up question,
+rewrite the follow-up to be a fully standalone question with all context included.
 If it's already standalone, return it unchanged.
 Return ONLY the rewritten question, nothing else."""),
     MessagesPlaceholder(variable_name="chat_history"),
     ("human", "Follow-up question: {question}\n\nStandalone question:"),
 ])
 
-# ── Prompt 2: answer using retrieved context + history ─────
+# Prompt 2 — answer using retrieved context + history
 ANSWER_PROMPT = ChatPromptTemplate.from_messages([
     ("system", """You are a helpful assistant. Use ONLY the context below to answer.
 If the answer is not in the context, say "I don't have enough information to answer that."
@@ -50,12 +50,9 @@ def get_chain_with_history():
     retriever   = get_retriever(vectorstore)
     llm         = get_llm()
 
-    # Step 1 — condense the question using history
     condense_chain = CONDENSE_PROMPT | llm | StrOutputParser()
 
-    # Step 2 — retrieve + answer
     def get_context(inputs):
-        # If there's history, condense first. If first question, use as-is.
         if inputs["chat_history"]:
             standalone = condense_chain.invoke({
                 "question":     inputs["question"],
@@ -63,12 +60,9 @@ def get_chain_with_history():
             })
         else:
             standalone = inputs["question"]
-
-        # Use the standalone question to search Pinecone
         docs = retriever.invoke(standalone)
         return format_docs(docs)
 
-    # Full chain
     chain = (
         {
             "context":      RunnableLambda(get_context),
@@ -109,11 +103,9 @@ if __name__ == "__main__":
             continue
 
         print("\n🤖 Thinking...\n")
-
         answer = ask_with_history(chain, question, chat_history)
         print(f"Bot: {answer}\n")
         print("-" * 60)
 
-        # ✅ Save to memory after every turn
         chat_history.append(HumanMessage(content=question))
         chat_history.append(AIMessage(content=answer))

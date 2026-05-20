@@ -1,11 +1,11 @@
 # llm.py
 from dotenv import load_dotenv
-from langchain_groq import ChatGroq
 import os
+from langchain_groq import ChatGroq
 
-load_dotenv()  # works locally
+load_dotenv()
 
-# This makes it work on Streamlit Cloud too
+# Load Streamlit secrets if running on Streamlit Cloud
 try:
     import streamlit as st
     for key, val in st.secrets.items():
@@ -13,15 +13,13 @@ try:
 except Exception:
     pass
 
-def get_llm():
-    """Load Llama 3 via Groq API"""
 
+def get_llm():
     llm = ChatGroq(
         api_key=os.getenv("GROQ_API_KEY"),
-        model_name="llama-3.1-8b-instant",   # free, fast Llama 3 model on Groq
-        temperature=0.2,               # low = more factual, less creative
-        max_tokens=1024                # max length of the answer
+        model_name="llama-3.1-8b-instant",
+        temperature=0.2,
+        max_tokens=1024
     )
-
     print("✅ Llama 3.1 loaded via Groq")
     return llm

@@ -1,9 +1,10 @@
+# ingest.py
 from dotenv import load_dotenv
 import os
 
 from langchain_community.document_loaders import PyPDFLoader, DirectoryLoader
 from langchain_text_splitters import RecursiveCharacterTextSplitter
-from langchain_huggingface import HuggingFaceEmbeddings          # ✅ updated
+from langchain_community.embeddings import HuggingFaceInferenceAPIEmbeddings
 from pinecone import Pinecone, ServerlessSpec
 from langchain_pinecone import PineconeVectorStore
 
@@ -16,7 +17,7 @@ def load_documents(data_path="data/"):
         loader_cls=PyPDFLoader
     )
     documents = loader.load()
-    print(f"✅ Loaded {len(documents)} page(s) from your documents")
+    print(f"✅ Loaded {len(documents)} page(s)")
     return documents
 
 def split_documents(documents):
@@ -29,11 +30,13 @@ def split_documents(documents):
     print(f"✅ Split into {len(chunks)} chunks")
     return chunks
 
+from langchain_huggingface import HuggingFaceEmbeddings
+
 def get_embeddings():
     embeddings = HuggingFaceEmbeddings(
         model_name="sentence-transformers/all-MiniLM-L6-v2"
     )
-    print("✅ Embedding model loaded")
+    print("✅ Embedding model loaded (local)")
     return embeddings
 
 def upload_to_pinecone(chunks, embeddings):
@@ -50,10 +53,12 @@ def upload_to_pinecone(chunks, embeddings):
         )
         print(f"✅ Created Pinecone index: {index_name}")
     else:
-        # ✅ Clear old vectors before re-uploading
-        print("🗑️  Clearing old vectors from Pinecone...")
-        pc.Index(index_name).delete(delete_all=True)
-        print("✅ Old vectors cleared")
+        # ✅ Try to clear, but don't crash if already empty
+        try:
+            pc.Index(index_name).delete(delete_all=True)
+            print("🗑️  Old vectors cleared")
+        except Exception:
+            print("ℹ️  Index already empty, skipping clear")
 
     print("⏳ Uploading chunks to Pinecone...")
     vector_store = PineconeVectorStore.from_documents(
@@ -67,10 +72,10 @@ def upload_to_pinecone(chunks, embeddings):
 def main():
     print("🚀 Starting document ingestion...\n")
     documents = load_documents()
-    chunks = split_documents(documents)
+    chunks    = split_documents(documents)
     embeddings = get_embeddings()
     upload_to_pinecone(chunks, embeddings)
-    print("\n🎉 Ingestion complete! Your documents are in Pinecone.")
+    print("\n🎉 Ingestion complete!")
 
 if __name__ == "__main__":
     main()
