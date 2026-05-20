@@ -1,12 +1,10 @@
-# retriever.py
 from dotenv import load_dotenv
 import os
 from langchain_pinecone import PineconeVectorStore
-from langchain_community.embeddings import HuggingFaceInferenceAPIEmbeddings
+from langchain_community.embeddings import FastEmbedEmbeddings
 
 load_dotenv()
 
-# Load Streamlit secrets if running on Streamlit Cloud
 try:
     import streamlit as st
     for key, val in st.secrets.items():
@@ -15,11 +13,9 @@ except Exception:
     pass
 
 
-from langchain_huggingface import HuggingFaceEmbeddings
-
 def get_vectorstore():
-    embeddings = HuggingFaceEmbeddings(
-        model_name="sentence-transformers/all-MiniLM-L6-v2"
+    embeddings = FastEmbedEmbeddings(
+        model_name="BAAI/bge-small-en-v1.5"  # lightweight, no torch needed
     )
     vectorstore = PineconeVectorStore(
         index_name="rag-chatbot",

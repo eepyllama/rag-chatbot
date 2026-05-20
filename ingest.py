@@ -30,13 +30,13 @@ def split_documents(documents):
     print(f"✅ Split into {len(chunks)} chunks")
     return chunks
 
-from langchain_huggingface import HuggingFaceEmbeddings
+from langchain_community.embeddings import FastEmbedEmbeddings
 
 def get_embeddings():
-    embeddings = HuggingFaceEmbeddings(
-        model_name="sentence-transformers/all-MiniLM-L6-v2"
+    embeddings = FastEmbedEmbeddings(
+        model_name="BAAI/bge-small-en-v1.5"
     )
-    print("✅ Embedding model loaded (local)")
+    print("✅ Embedding model loaded (FastEmbed)")
     return embeddings
 
 def upload_to_pinecone(chunks, embeddings):
